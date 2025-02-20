@@ -1,8 +1,5 @@
 from experts.base_expert import BaseExpert
 
-from langchain import PromptTemplate, OpenAI, LLMChain
-from langchain.chat_models import ChatOpenAI
-
 
 class ParameterExtractor(BaseExpert):
 
@@ -42,20 +39,7 @@ The output format is a JSON structure followed by refined code:
             description='Skilled in programming and coding, capable of implementing the optimization solution in a programming language.',
             model=model   
         )
-        self.llm = ChatOpenAI(
-            model_name=model,
-            temperature=0
-        )
-        self.forward_prompt_template = self.ROLE_DESCRIPTION + '\n' + self.FORWARD_TASK
-        self.forward_chain = LLMChain(
-            llm=self.llm,
-            prompt=PromptTemplate.from_template(self.forward_prompt_template)
-        )
-        self.backward_prompt_template = self.ROLE_DESCRIPTION + '\n' + self.BACKWARD_TASK
-        self.backward_chain = LLMChain(
-            llm=self.llm,
-            prompt=PromptTemplate.from_template(self.backward_prompt_template)
-        )
+    
 
     def forward(self, problem, comment_pool):
         self.problem = problem
@@ -66,18 +50,20 @@ The output format is a JSON structure followed by refined code:
             comments_text=comments_text
         ))
         print()
-        output = self.forward_chain.predict(
-            problem_description=problem['description'], 
-            comments_text=comments_text
-        )
+        output = self.forward_chain.invoke({
+            "problem_description": problem['description'], 
+            "comments_text": comments_text
+        })
+        output = output.content
         self.previous_answer = output
         return output
 
     def backward(self, feedback_pool):
         if not hasattr(self, 'problem'):
             raise NotImplementedError('Please call forward first!')
-        output = self.backward_chain.predict(
-            problem_description=self.problem['description'], 
-            previous_answer=self.previous_answer,
-            feedback=feedback_pool.get_current_comment_text())
-        return output
+        output = self.backward_chain.invoke({
+            "problem_description": self.problem['description'], 
+            "previous_answer": self.previous_answer,
+            "feedback": feedback_pool.get_current_comment_text()
+        })
+        return output.content

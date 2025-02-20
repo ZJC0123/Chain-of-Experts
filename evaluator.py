@@ -58,10 +58,11 @@ Output:
         )
 
     def forward(self, problem):
-        answer = self.forward_chain.predict(
-            problem_description=problem['description'], 
-            code_example=problem['code_example'],
-        )
+        answer = self.forward_chain.invoke({
+            "problem_description": problem['description'], 
+            "code_example": problem['code_example'],
+        })
+        answer = answer.content
         answer = answer.strip("'").strip('')
         answer = json.loads(answer)
         return answer

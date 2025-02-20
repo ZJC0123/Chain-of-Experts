@@ -1,9 +1,5 @@
 from experts.base_expert import BaseExpert
 
-from langchain import PromptTemplate, OpenAI, LLMChain
-from langchain.chat_models import ChatOpenAI
-
-
 class CodeReviewer(BaseExpert):
 
     ROLE_DESCRIPTION = 'You are a code reviewer that conducts thorough reviews of the implemented code to identify any errors, inefficiencies, or areas for improvement.'
@@ -38,36 +34,32 @@ The output format is a JSON structure followed by refined code:
             description='Skilled in programming and coding, capable of implementing the optimization solution in a programming language.',
             model=model   
         )
-        self.llm = ChatOpenAI(
-            model_name=model,
-            temperature=0
-        )
-        self.forward_prompt_template = self.ROLE_DESCRIPTION + '\n' + self.FORWARD_TASK
-        self.forward_chain = LLMChain(
-            llm=self.llm,
-            prompt=PromptTemplate.from_template(self.forward_prompt_template)
-        )
-        self.backward_prompt_template = self.ROLE_DESCRIPTION + '\n' + self.BACKWARD_TASK
-        self.backward_chain = LLMChain(
-            llm=self.llm,
-            prompt=PromptTemplate.from_template(self.backward_prompt_template)
-        )
 
     def forward(self, problem, comment_pool):
         self.problem = problem
         comments_text = comment_pool.get_current_comment_text()
-        output = self.forward_chain.predict(
-            problem_description=problem['description'], 
-            comments_text=comments_text
-        )
+        output = self.forward_chain.invoke({
+            "problem_description":problem['description'], 
+            "comments_text":comments_text
+        })
+        output = output.content
+        # output = self.forward_chain.predict(
+        #     problem_description=problem['description'], 
+        #     comments_text=comments_text
+        # )
         self.previous_code = output
         return output
 
     def backward(self, feedback_pool):
         if not hasattr(self, 'problem'):
             raise NotImplementedError('Please call forward first!')
-        output = self.backward_chain.predict(
-            problem_description=self.problem['description'], 
-            previous_answer=self.previous_code,
-            feedback=feedback_pool.get_current_comment_text())
-        return output
+        output = self.backward_chain.invoke({
+            "problem_description":self.problem['description'], 
+            "previous_answer":self.previous_code,
+            "feedback":feedback_pool.get_current_comment_text()
+        })
+        # output = self.backward_chain.predict(
+        #     problem_description=self.problem['description'], 
+        #     previous_answer=self.previous_code,
+        #     feedback=feedback_pool.get_current_comment_text())
+        return output.content

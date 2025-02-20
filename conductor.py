@@ -1,8 +1,5 @@
 import random
 
-from langchain import PromptTemplate, OpenAI, LLMChain
-from langchain.chat_models import ChatOpenAI
-
 from experts.base_expert import BaseExpert
 
 
@@ -33,7 +30,7 @@ You should output the name of expert directly. The next expert is:'''
             description='An special expert that collaborates all other experts.',
             model=model
         )
-        self.llm.max_tokens = 10
+        # self.llm.max_tokens = 10
 
     def forward(self, problem, comment_pool, max_collaborate_nums):
         all_experts = comment_pool.all_experts
@@ -43,14 +40,15 @@ You should output the name of expert directly. The next expert is:'''
         experts_info = '\n'.join([str(e) for e in all_experts])
         commented_experts = str(commented_experts_name)     
         remaining_experts = str(list(set(all_experts_name) - set(commented_experts_name)))
-        answer = self.forward_chain.predict(
-            problem_description=problem['description'], 
-            experts_info=experts_info,
-            commented_experts=commented_experts,
-            remaining_experts=remaining_experts,
-            max_collaborate_nums=max_collaborate_nums,
-            remaining_collaborate_nums=max_collaborate_nums-len(commented_experts_name),
-        )
+        answer = self.forward_chain.invoke({
+            "problem_description": problem['description'], 
+            "experts_info": experts_info,
+            "commented_experts": commented_experts,
+            "remaining_experts": remaining_experts,
+            "max_collaborate_nums": max_collaborate_nums,
+            "remaining_collaborate_nums": max_collaborate_nums - len(commented_experts_name),
+        })
+        answer = answer.content
         expert_name_to_obj = { e.name: e for e in all_experts }
         for name, expert in expert_name_to_obj.items():
             if name in answer:

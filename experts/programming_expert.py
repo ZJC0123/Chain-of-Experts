@@ -1,7 +1,5 @@
 from experts.base_expert import BaseExpert
 
-from langchain import PromptTemplate, OpenAI, LLMChain
-from langchain.chat_models import ChatOpenAI
 
 
 class ProgrammingExpert(BaseExpert):
@@ -53,19 +51,20 @@ The output format is a JSON structure followed by refined code:
             comments_text=comments_text
         ))
         print()
-        output = self.forward_chain.predict(
-            problem_description=problem['description'], 
-            code_example=problem['code_example'],
-            comments_text=comments_text
-        )
-        self.previous_code = output
-        return output
+        output = self.forward_chain.invoke({
+            "problem_description": problem['description'], 
+            "code_example": problem['code_example'],
+            "comments_text": comments_text
+        })
+        self.previous_code = output.content
+        return output.content
 
     def backward(self, feedback_pool):
         if not hasattr(self, 'problem'):
             raise NotImplementedError('Please call forward first!')
-        output = self.backward_chain.predict(
-            problem_description=self.problem['description'], 
-            previous_code=self.previous_code,
-            feedback=feedback_pool.get_current_comment_text())
-        return output
+        output = self.backward_chain.invoke({
+            "problem_description": self.problem['description'], 
+            "previous_code": self.previous_code,
+            "feedback": feedback_pool.get_current_comment_text()
+        })
+        return output.content

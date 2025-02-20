@@ -1,7 +1,5 @@
 from experts.base_expert import BaseExpert
 
-from langchain import PromptTemplate, LLMChain
-from langchain.chat_models import ChatOpenAI
 
 
 class ModelingExpert(BaseExpert):
@@ -58,23 +56,30 @@ The output format is a JSON structure followed by refined code:
             comments_text=comments_text
         ))
         print()
-        output = self.forward_chain.predict(
-            problem_description=problem['description'], 
-            comments_text=comments_text
-        )
+        output = self.forward_chain.invoke({   
+            "problem_description": problem['description'], 
+            "comments_text": comments_text
+        })
+
+        # output = self.forward_chain.predict(
+        #     problem_description=problem['description'], 
+        #     comments_text=comments_text
+        # )
         # Meet the rule of MIP
-        output = output.replace(' < ', ' \leq ').replace(' > ', ' \geq ')
+        output = output.content
+        output = output.replace(' < ', r' \leq ').replace(' > ', r' \geq ')
         self.previous_answer = output
         return output
 
     def backward(self, feedback_pool):
         if not hasattr(self, 'problem'):
             raise NotImplementedError('Please call forward first!')
-        output = self.backward_chain.predict(
-            problem_description=self.problem['description'], 
-            previous_answer=self.previous_answer,
-            feedback=feedback_pool.get_current_comment_text())
-        return output
+        output = self.backward_chain.invoke({
+            "problem_description": self.problem['description'], 
+            "previous_answer": self.previous_answer,
+            "feedback": feedback_pool.get_current_comment_text()
+        })
+        return output.content
 
 
 if __name__ == '__main__':
@@ -86,6 +91,6 @@ if __name__ == '__main__':
         'description': 'A telecom company needs to build a set of cell towers to provide signal coverage for the inhabitants of a given city. A number of potential locations where the towers could be built have been identified. The towers have a fixed range, and due to budget constraints only a limited number of them can be built. Given these restrictions, the company wishes to provide coverage to the largest percentage of the population possible. To simplify the problem, the company has split the area it wishes to cover into a set of regions, each of which has a known population. The goal is then to choose which of the potential locations the company should build cell towers on in order to provide coverage to as many people as possible. Please formulate a mathematical programming model for this problem based on the description above.',
     }
     comment_pool = CommentPool(all_experts, visible_matrix=np.ones((num_experts, num_experts)))
-    expert = ModelingExpert('gpt-3.5-turbo')
+    expert = ModelingExpert('ollama')
     answer = expert.forward(problem, comment_pool)
     print(answer)
