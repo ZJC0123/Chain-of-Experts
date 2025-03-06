@@ -91,4 +91,7 @@ def chain_of_experts(problem,
 if __name__ == '__main__':
     from utils import read_problem
     problem = read_problem('LPWP', 'prob_250')
-    chain_of_experts(problem, model_name='ollama', enable_reflection=False, max_collaborate_nums=5, max_trials=5)
+    answer = chain_of_experts(problem, model_name='ollama', enable_reflection=False, max_collaborate_nums=5, max_trials=5)
+    print('Final answer:')
+    print("========================================")
+    print(answer)
