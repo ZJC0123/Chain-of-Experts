@@ -12,7 +12,7 @@ You can contribute by sharing your expertise, explaining relevant concepts, and 
 Please provide your input based on the given problem description: 
 {problem_description}
 
-Your output format should be a JSON like this (choose at most 3 hardest terminology):
+Your output format should be a JSON like this (choose at most 3 hardest terminology), just a josn:
 [
   {{
     "terminology": "...",
@@ -64,9 +64,30 @@ The output format is a JSON structure followed by refined code:
             "comments_text": comments_text
         })
         output = output.content
-        output = json.loads(output)
+        # try:
+        #     output = json.loads(output)
+        # except json.JSONDecodeError:
+        #     print(output)
+        #     output = output.replace('\\', '\\\\')
+        #     output = json.loads(output)
+        #     # print("=======================================================")
+        #     # print(output)
+        #     # print("=======================================================")
+        #     # raise ValueError('The output is not a valid JSON format!')
+        if isinstance(output, str):
+            try:
+                parsed_data = json.loads(output)
+            except json.JSONDecodeError:
+                # 处理转义问题或其他修复逻辑
+                output = output.strip().replace('```json', '').replace('```', '').strip()
+                fixed_output = output.replace('\\', '\\\\')
+                print(fixed_output)
+                parsed_data = json.loads(fixed_output)
+        else:
+            # 如果 output 已经被解析过，直接使用
+            parsed_data = output
         answer = ''
-        for item in output:
+        for item in parsed_data:
             answer += item['terminology'] + ':' + item['interpretation'] + '\n'
         self.previous_answer = answer
         return answer

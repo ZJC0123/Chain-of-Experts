@@ -1,5 +1,6 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_ollama import ChatOllama
+from langchain_deepseek import ChatDeepSeek
 
 class BaseExpert(object):
 
@@ -14,12 +15,18 @@ class BaseExpert(object):
         # )
 
 
-        self.llm = ChatOllama(
-            model="qwen2.5",
+
+        self.llm = ChatDeepSeek(
+            api_key="sk-97045140f1ef4c27ae8b50051f2984a7",
+            model="deepseek-chat",
             temperature=0,
             # other params...
         )
-
+        # self.llm = ChatOllama(
+        #     model="qwen2.5",
+        #     temperature=0,
+        #     # other params...
+        # )
 
 
         self.forward_prompt_template = self.ROLE_DESCRIPTION + '\n' + self.FORWARD_TASK

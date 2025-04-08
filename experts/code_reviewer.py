@@ -20,7 +20,7 @@ The answer you give previously is as follow:
 The feedback is as follow:
 {feedback}
 
-The output format is a JSON structure followed by refined code:
+The output format is a JSON structure followed by refined code, just a josn:
 {{
     'is_caused_by_you': false,
     'reason': 'leave empty string if the problem is not caused by you',
